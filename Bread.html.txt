@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ร้านขนมปังปิ้งออนไลน์</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; background-color: #f4f4f9; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 400px; }
+        .hidden { display: none; }
+        .btn { background-color: #ff9800; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; margin-top: 10px; width: 100%; }
+        .btn:disabled { background-color: #ccc; }
+        h2 { color: #5d4037; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="step1">
+        <h2>1. เลือกชนิดขนมปัง</h2>
+        <label><input type="radio" name="breadType" value="5" checked> แผ่นเล็ก (5 บาท)</label><br>
+        <label><input type="radio" name="breadType" value="10"> แผ่นใหญ่ (10 บาท)</label><br><br>
+        <label>จำนวนแผ่น: <input type="number" id="qty" value="1" min="1" style="width: 50px;"></label>
+        <button class="btn" onclick="goToStep2()">ต่อไป: เลือกซอส</button>
+    </div>
+
+    <div id="step2" class="hidden">
+        <h2>2. เลือกซอส (1-2 อย่าง)</h2>
+        <label><input type="checkbox" name="sauce" value="นมข้นหวาน+น้ำตาล"> นมข้นหวาน+น้ำตาล</label><br>
+        <label><input type="checkbox" name="sauce" value="ช็อกโกแลต"> ซอสช็อกโกแลต</label><br>
+        <label><input type="checkbox" name="sauce" value="สตอเบอร์รี่"> ซอสสตอเบอร์รี่</label><br>
+        <p id="sauceWarning" style="color:red; font-size:12px;"></p>
+        <button class="btn" onclick="goToStep3()">ต่อไป: สรุปยอดเงิน</button>
+    </div>
+
+    <div id="step3" class="hidden">
+        <h2>3. สรุปรายการสั่งซื้อ</h2>
+        <div id="orderSummary"></div>
+        <button class="btn" style="background-color: #4caf50;" onclick="saveOrder()">ยืนยันการสั่งซื้อ</button>
+    </div>
+
+    <div id="step4" class="hidden">
+        <h2>4. ประวัติการขายทั้งหมด</h2>
+        <div id="salesLog" style="font-size: 13px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 5px;"></div>
+        <hr>
+        <h3 id="totalRevenue">ยอดขายรวม: 0 บาท</h3>
+        <button class="btn" onclick="resetForm()">รับออเดอร์ใหม่</button>
+    </div>
+</div>
+
+<script>
+    let orderData = {};
+    let allSales = [];
+    let totalSalesAmount = 0;
+
+    function goToStep2() {
+        const breadPrice = document.querySelector('input[name="breadType"]:checked').value;
+        const breadText = breadPrice == "5" ? "แผ่นเล็ก" : "แผ่นใหญ่";
+        const qty = document.getElementById('qty').value;
+        
+        orderData = { breadText, breadPrice: parseInt(breadPrice), qty: parseInt(qty) };
+        
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.remove('hidden');
+    }
+
+    function goToStep3() {
+        const sauces = Array.from(document.querySelectorAll('input[name="sauce"]:checked')).map(el => el.value);
+        
+        if (sauces.length < 1 || sauces.length > 2) {
+            document.getElementById('sauceWarning').innerText = "กรุณาเลือกซอส 1 หรือ 2 อย่างเท่านั้น";
+            return;
+        }
+
+        orderData.sauces = sauces;
+        orderData.totalPrice = orderData.breadPrice * orderData.qty;
+
+        document.getElementById('orderSummary').innerHTML = `
+            <p>ขนมปัง: ${orderData.breadText} (${orderData.qty} แผ่น)</p>
+            <p>ซอส: ${orderData.sauces.join(', ')}</p>
+            <hr>
+            <h3>ยอดรวม: ${orderData.totalPrice} บาท</h3>
+        `;
+
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('step3').classList.remove('hidden');
+    }
+
+    function saveOrder() {
+        allSales.push({...orderData});
+        totalSalesAmount += orderData.totalPrice;
+
+        let logHtml = "";
+        allSales.forEach((item, index) => {
+            logHtml += `ออเดอร์ #${index+1}: ${item.breadText} ${item.qty} แผ่น - ${item.totalPrice} บาท<br>`;
+        });
+
+        document.getElementById('salesLog').innerHTML = logHtml;
+        document.getElementById('totalRevenue').innerText = `ยอดขายรวมทั้งหมด: ${totalSalesAmount} บาท`;
+
+        document.getElementById('step3').classList.add('hidden');
+        document.getElementById('step4').classList.remove('hidden');
+    }
+
+    function resetForm() {
+        document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+        document.getElementById('qty').value = 1;
+        document.getElementById('step4').classList.add('hidden');
+        document.getElementById('step1').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
